@@ -4,31 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatShit</title>
-    <link href="style.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="welcome-overlay" class="welcome-overlay active"></div>
     <div class="container">
         <!-- Sidebar -->
         <div id="sidebar" class="sidebar sidebar-open">
             <div class="sidebar-header">
-                <h2 class="server-name">ChatApp</h2>
-                <button id="toggle-sidebar" class="toggle-btn">◄</button>
+                <h2 class="server-name">ChatShit</h2>
+                <div class="toggle-btn-wrapper">
+                    <button id="toggle-sidebar" class="toggle-btn">◄</button>
+                </div>
             </div>
             <div class="user-info">
-                <div class="user-pfp">U</div>
-                <span class="user-name">User</span>
-                <button class="settings-btn">⚙</button>
+                <div id="user-pfp" class="user-pfp">U</div>
+                <span id="user-name" class="user-name">User</span>
+                <button id="settings-btn" class="settings-btn">⚙</button>
             </div>
             <div class="room-list">
                 <div class="empty-room-list">No rooms joined yet</div>
             </div>
             <div class="sidebar-footer">
+                <button id="help-btn" class="action-btn">Help</button>
                 <button id="join-room" class="action-btn">Join Room</button>
                 <button id="create-room" class="action-btn">Create Room</button>
             </div>
         </div>
+        <!-- Reopen Button -->
+        <button id="reopen-sidebar" class="reopen-btn">►</button>
         <!-- Chat Area -->
-        <div class="chat-area">
+        <div id="chat-area" class="chat-area">
             <div class="chat-header">
                 <h2 id="chat-title" class="room-title">Select a room</h2>
             </div>
@@ -41,16 +47,253 @@
             </div>
         </div>
     </div>
-    <!-- Modal for Join/Create Room -->
+    <!-- Primary Modal for Join/Create Room and Settings -->
     <div id="modal" class="modal">
-        <div class="modal-content">
-            <h3 id="modal-title" class="modal-title">Enter Room Name</h3>
-            <input id="room-name-input" type="text" placeholder="Room name" class="modal-input">
+        <div id="modal-content" class="modal-content">
+            <h3 id="modal-title" class="modal-title">Enter Room Details</h3>
+            <div id="modal-body"></div>
             <div class="modal-buttons">
                 <button id="modal-cancel" class="modal-btn cancel">Cancel</button>
-                <button id="modal-submit" class="modal-btn submit">Submit</button>
             </div>
         </div>
     </div>
+    <!-- Welcome Modal for Account Name -->
+    <div id="welcome-modal" class="welcome-modal active">
+        <div class="modal-content">
+            <h3 class="modal-title">Enter Account Name</h3>
+            <input id="account-name-input" type="text" placeholder="Account name" class="modal-input">
+            <div class="modal-buttons">
+                <button id="welcome-submit" class="modal-btn submit">Submit</button>
+            </div>
+        </div>
+    </div>
+    <!-- Help Modal -->
+    <div id="help-modal" class="help-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">How to Use the App</h3>
+            <div class="help-content">
+                <p>1) Every room must have a room code.</p>
+                <p>2) If you want to enter a room then ask the room owner for the room's code and room name. </p>
+                <p>3) If you want to create a room yourself, then name the room and set a room code for your room. Then share the room name and room code with your friends so you can chat with them.</p>
+                <p>4) The button besides the user's name is the user settings button, there you can change your name and profile picture. </p>
+            </div>
+            <div class="modal-buttons">
+                <button id="help-close" class="modal-btn close">Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- Secondary Modal for Avatar Selection -->
+    <div id="avatar-modal" class="avatar-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Choose Profile Picture</h3>
+            <div class="avatar-options">
+                <div class="avatar-option" style="background-color: #5eead4;" data-color="#5eead4"></div>
+                <div class="avatar-option" style="background-color: #f472b6;" data-color="#f472b6"></div>
+                <div class="avatar-option" style="background-color: #60a5fa;" data-color="#60a5fa"></div>
+            </div>
+            <div class="avatar-upload">
+                <input type="file" id="avatar-upload" accept="image/*">
+            </div>
+            <div class="modal-buttons">
+                <button id="avatar-cancel" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Welcome modal enforcement
+        const welcomeOverlay = document.getElementById('welcome-overlay');
+        const welcomeModal = document.getElementById('welcome-modal');
+        const userNameDisplay = document.getElementById('user-name');
+        const userPfp = document.getElementById('user-pfp');
+
+        if (!sessionStorage.getItem('welcomeModalShown')) {
+            welcomeModal.classList.add('active');
+            welcomeOverlay.classList.add('active');
+            // Disable outside click to close
+            welcomeModal.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        }
+
+        document.getElementById('welcome-submit').addEventListener('click', () => {
+            const accountName = document.getElementById('account-name-input').value.trim();
+            if (accountName) {
+                userNameDisplay.textContent = accountName;
+                userPfp.textContent = accountName[0];
+                welcomeModal.classList.remove('active');
+                welcomeOverlay.classList.remove('active');
+                sessionStorage.setItem('welcomeModalShown', 'true');
+            } else {
+                alert('Please enter a valid account name.');
+            }
+        });
+
+        // Sidebar toggle
+        document.getElementById('toggle-sidebar').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('sidebar-open');
+            sidebar.classList.add('sidebar-closed');
+        });
+
+        document.getElementById('reopen-sidebar').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('sidebar-closed');
+            sidebar.classList.add('sidebar-open');
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalCancel = document.getElementById('modal-cancel');
+        const avatarModal = document.getElementById('avatar-modal');
+        const avatarCancel = document.getElementById('avatar-cancel');
+        const helpModal = document.getElementById('help-modal');
+
+        // Help modal
+        document.getElementById('help-btn').addEventListener('click', () => {
+            helpModal.classList.add('active');
+        });
+
+        document.getElementById('help-close').addEventListener('click', () => {
+            helpModal.classList.remove('active');
+        });
+
+        helpModal.addEventListener('click', (event) => {
+            if (event.target === helpModal) {
+                helpModal.classList.remove('active');
+            }
+        });
+
+        // Room modal
+        document.getElementById('join-room').addEventListener('click', () => {
+            modalTitle.textContent = 'Join Room';
+            modalBody.innerHTML = `
+                <input id="room-name-input" type="text" placeholder="Room name" class="modal-input">
+                <input id="room-code-input" type="text" placeholder="Room code" class="modal-input">
+            `;
+            modalContent.querySelector('.modal-buttons').innerHTML = `
+                <button id="modal-cancel" class="modal-btn cancel">Cancel</button>
+                <button id="modal-submit" class="modal-btn submit">Submit</button>
+            `;
+            modal.classList.add('active');
+            document.getElementById('modal-submit').addEventListener('click', () => {
+                const roomName = document.getElementById('room-name-input').value.trim();
+                const roomCode = document.getElementById('room-code-input').value.trim();
+                if (roomName && roomCode) {
+                    console.log('Join Room:', { roomName, roomCode });
+                    modal.classList.remove('active');
+                } else {
+                    alert('Please enter both room name and room code.');
+                }
+            });
+            document.getElementById('modal-cancel').addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+        });
+
+        document.getElementById('create-room').addEventListener('click', () => {
+            modalTitle.textContent = 'Create Room';
+            modalBody.innerHTML = `
+                <input id="room-name-input" type="text" placeholder="Room name" class="modal-input">
+                <input id="room-code-input" type="text" placeholder="Room code" class="modal-input">
+            `;
+            modalContent.querySelector('.modal-buttons').innerHTML = `
+                <button id="modal-cancel" class="modal-btn cancel">Cancel</button>
+                <button id="modal-submit" class="modal-btn submit">Submit</button>
+            `;
+            modal.classList.add('active');
+            document.getElementById('modal-submit').addEventListener('click', () => {
+                const roomName = document.getElementById('room-name-input').value.trim();
+                const roomCode = document.getElementById('room-code-input').value.trim();
+                if (roomName && roomCode) {
+                    console.log('Create Room:', { roomName, roomCode });
+                    modal.classList.remove('active');
+                } else {
+                    alert('Please enter both room name and room code.');
+                }
+            });
+            document.getElementById('modal-cancel').addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+        });
+
+        // Settings modal
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            modalTitle.textContent = 'User Settings';
+            modalBody.innerHTML = `
+                <div class="user-info-display">
+                    <div class="pfp-container">
+                        <div id="pfp-slot" class="user-pfp" style="background-color: ${userPfp.style.backgroundColor}">${userNameDisplay.textContent[0]}</div>
+                        <button id="change-pfp" class="modal-btn change-pfp">Change</button>
+                    </div>
+                    <div class="name-container">
+                        <span>Current Username: ${userNameDisplay.textContent}</span>
+                        <input id="new-name-input" type="text" placeholder="New username" class="modal-input">
+                        <button id="change-name-submit" class="modal-btn submit">Change Name</button>
+                    </div>
+                </div>
+            `;
+            modalContent.querySelector('.modal-buttons').innerHTML = `
+                <button id="modal-cancel" class="modal-btn cancel">Cancel</button>
+            `;
+            modal.classList.add('active');
+            document.getElementById('change-name-submit').addEventListener('click', () => {
+                const newName = document.getElementById('new-name-input').value.trim();
+                if (newName) {
+                    userNameDisplay.textContent = newName;
+                    userPfp.textContent = newName[0];
+                    modal.classList.remove('active');
+                } else {
+                    alert('Please enter a valid username.');
+                }
+            });
+            document.getElementById('change-pfp').addEventListener('click', () => {
+                modal.classList.remove('active');
+                avatarModal.classList.add('active');
+            });
+            document.getElementById('modal-cancel').addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+        });
+
+        // Avatar modal
+        document.querySelectorAll('.avatar-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const color = option.getAttribute('data-color');
+                userPfp.style.backgroundColor = color;
+                avatarModal.classList.remove('active');
+            });
+        });
+
+        document.getElementById('avatar-upload').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                console.log('Uploaded PFP:', { name: file.name, size: file.size, type: file.type });
+                avatarModal.classList.remove('active');
+            }
+        });
+
+        modalCancel.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        avatarCancel.addEventListener('click', () => {
+            avatarModal.classList.remove('active');
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        avatarModal.addEventListener('click', (event) => {
+            if (event.target === avatarModal) {
+                avatarModal.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
